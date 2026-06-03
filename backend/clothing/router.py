@@ -1,7 +1,7 @@
 #옷 정보 받아서 저장
 
 from fastapi import APIRouter
-from schemas.clothing import ClothingItem, WardrobeInput
+from backend.clothing.schema import ClothingItem, WardrobeInput
 
 router = APIRouter(prefix="/clothing", tags=["clothing"])
 
