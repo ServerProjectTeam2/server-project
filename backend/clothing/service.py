@@ -1,9 +1,24 @@
 import json
 import os
+import shutil
 from typing import List
+from fastapi import UploadFile
 from backend.clothing.schema import ClothingItem
 
 CLOTHES_FILE = "backend/clothing/clothes.json"
+UPLOAD_DIR = "backend/static/uploads"
+
+def save_image(file: UploadFile) -> str:
+    """업로드된 이미지를 저장하고 경로를 반환합니다."""
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+    
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    return file_path
 
 def load_clothes() -> List[dict]:
     """저장된 옷 목록을 JSON 파일에서 불러옵니다."""
