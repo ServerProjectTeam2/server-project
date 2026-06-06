@@ -45,3 +45,15 @@ def save_clothes(new_items: List[ClothingItem]):
         json.dump(existing_data, f, ensure_ascii=False, indent=4)
     
     return existing_data
+
+def delete_clothing(index: int) -> List[dict]:
+    """특정 인덱스의 옷 정보를 삭제합니다."""
+    existing_data = load_clothes()
+    
+    if 0 <= index < len(existing_data):
+        existing_data.pop(index)
+        
+        with open(CLOTHES_FILE, "w", encoding="utf-8") as f:
+            json.dump(existing_data, f, ensure_ascii=False, indent=4)
+            
+    return existing_data

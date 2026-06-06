@@ -3,7 +3,7 @@
 from typing import List
 from fastapi import APIRouter, UploadFile, File
 from backend.clothing.schema import ClothingItem, WardrobeInput
-from backend.clothing.service import save_clothes, save_image, load_clothes
+from backend.clothing.service import save_clothes, save_image, load_clothes, delete_clothing
 
 router = APIRouter(prefix="/clothing", tags=["clothing"])
 
@@ -11,6 +11,16 @@ router = APIRouter(prefix="/clothing", tags=["clothing"])
 async def get_all_clothing():
     """저장된 모든 옷 목록을 조회합니다."""
     return load_clothes()
+
+@router.delete("/{index}")
+async def delete_clothing_item(index: int):
+    """특정 인덱스의 옷 정보를 삭제합니다."""
+    updated_wardrobe = delete_clothing(index)
+    return {
+        "status": "success",
+        "message": f"Index {index} item deleted.",
+        "total_count": len(updated_wardrobe)
+    }
 
 @router.post("/upload-image")
 async def upload_clothing_image(file: UploadFile = File(...)):
