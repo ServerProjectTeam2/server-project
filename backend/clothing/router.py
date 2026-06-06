@@ -1,10 +1,16 @@
 #옷 정보 받아서 저장
 
+from typing import List
 from fastapi import APIRouter, UploadFile, File
 from backend.clothing.schema import ClothingItem, WardrobeInput
-from backend.clothing.service import save_clothes, save_image
+from backend.clothing.service import save_clothes, save_image, load_clothes
 
 router = APIRouter(prefix="/clothing", tags=["clothing"])
+
+@router.get("/", response_model=List[ClothingItem])
+async def get_all_clothing():
+    """저장된 모든 옷 목록을 조회합니다."""
+    return load_clothes()
 
 @router.post("/upload-image")
 async def upload_clothing_image(file: UploadFile = File(...)):
