@@ -46,14 +46,15 @@ def save_clothes(new_items: List[ClothingItem]):
     
     return existing_data
 
-def delete_clothing(index: int) -> List[dict]:
-    """특정 인덱스의 옷 정보를 삭제합니다."""
+def delete_clothing(item_id: str) -> List[dict]:
+    """특정 ID의 옷 정보를 삭제합니다."""
     existing_data = load_clothes()
     
-    if 0 <= index < len(existing_data):
-        existing_data.pop(index)
-        
+    # ID가 일치하지 않는 항목만 남깁니다 (삭제 로직)
+    updated_data = [item for item in existing_data if item.get("id") != item_id]
+    
+    if len(existing_data) != len(updated_data):
         with open(CLOTHES_FILE, "w", encoding="utf-8") as f:
-            json.dump(existing_data, f, ensure_ascii=False, indent=4)
+            json.dump(updated_data, f, ensure_ascii=False, indent=4)
             
-    return existing_data
+    return updated_data

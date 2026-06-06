@@ -12,13 +12,13 @@ async def get_all_clothing():
     """저장된 모든 옷 목록을 조회합니다."""
     return load_clothes()
 
-@router.delete("/{index}")
-async def delete_clothing_item(index: int):
-    """특정 인덱스의 옷 정보를 삭제합니다."""
-    updated_wardrobe = delete_clothing(index)
+@router.delete("/{item_id}")
+async def delete_clothing_item(item_id: str):
+    """특정 ID의 옷 정보를 삭제합니다."""
+    updated_wardrobe = delete_clothing(item_id)
     return {
         "status": "success",
-        "message": f"Index {index} item deleted.",
+        "message": f"Item with ID {item_id} deleted.",
         "total_count": len(updated_wardrobe)
     }
 
