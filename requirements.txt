@@ -4,3 +4,4 @@ pydantic
 python-multipart
 jinja2
 python-dotenv
+langchain-groq
