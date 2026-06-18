@@ -47,10 +47,21 @@ def save_clothes(new_items: List[ClothingItem]):
     return existing_data
 
 def delete_clothing(item_id: str) -> List[dict]:
-    """특정 ID의 옷 정보를 삭제합니다."""
+    """특정 ID의 옷 정보와 실제 이미지 파일을 삭제합니다."""
     existing_data = load_clothes()
     
-    # ID가 일치하지 않는 항목만 남깁니다 (삭제 로직)
+    # 삭제할 아이템 찾기 (이미지 파일 삭제를 위해)
+    item_to_delete = next((item for item in existing_data if item.get("id") == item_id), None)
+    
+    if item_to_delete and item_to_delete.get("image_path"):
+        image_path = item_to_delete.get("image_path")
+        if os.path.exists(image_path):
+            try:
+                os.remove(image_path)
+            except Exception as e:
+                print(f"Error deleting file {image_path}: {e}")
+    
+    # ID가 일치하지 않는 항목만 남깁니다
     updated_data = [item for item in existing_data if item.get("id") != item_id]
     
     if len(existing_data) != len(updated_data):

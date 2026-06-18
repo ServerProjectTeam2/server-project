@@ -11,6 +11,7 @@ class ClothingItem(BaseModel):
     thickness: str       # "얇음" | "보통" | "두꺼움"
     material: Optional[str] = None   # "면", "울", "패딩" 등
     tags: List[str] = []             # ["캐주얼", "방한"] 등
+    description: Optional[str] = None # AI 분석 설명 추가
     image_path: Optional[str] = None # 저장된 이미지 경로
 
 class WardrobeInput(BaseModel):

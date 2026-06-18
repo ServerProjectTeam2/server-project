@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, UploadFile, File
 from backend.clothing.schema import ClothingItem, WardrobeInput
 from backend.clothing.service import save_clothes, save_image, load_clothes, delete_clothing
+from backend.clothing.vision import analyze_clothing_image
 
 router = APIRouter(prefix="/clothing", tags=["clothing"])
 
@@ -20,6 +21,29 @@ async def delete_clothing_item(item_id: str):
         "status": "success",
         "message": f"Item with ID {item_id} deleted.",
         "total_count": len(updated_wardrobe)
+    }
+
+@router.post("/upload-and-analyze")
+async def upload_and_analyze_clothing(file: UploadFile = File(...)):
+    """
+    이미지를 업로드하고 AI가 자동으로 옷의 정보를 분석합니다.
+    (윤재건 파트: 이미지 처리 및 정보 추출)
+    """
+    # 1. 이미지 파일 읽기
+    content = await file.read()
+    
+    # 2. Vision AI로 이미지 분석 (clothing/vision.py 사용)
+    analysis = analyze_clothing_image(content)
+    
+    # 3. 이미지 파일 저장
+    file.file.seek(0)
+    file_path = save_image(file)
+    
+    return {
+        "status": "success",
+        "analysis": analysis,
+        "image_path": file_path,
+        "message": "이미지 분석이 완료되었습니다. 추출된 정보를 확인해주세요."
     }
 
 @router.post("/upload-image")
