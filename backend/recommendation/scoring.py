@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
 from backend.clothing.schema import ClothingItem
 from backend.weather.schema import CurrentWeather
 
@@ -140,3 +140,33 @@ def get_top_scored_items(
         final_candidates.extend(cat_items[:top_n])
         
     return final_candidates
+
+
+def build_fallback_recommendation(
+    clothes: List[ClothingItem],
+    reason: str = "LLM 추천을 사용할 수 없어 점수 기반 기본 추천을 반환했습니다.",
+) -> Dict[str, Any]:
+    """
+    추천 실패 상황에서도 response_model에 맞는 최소 코디를 반환합니다.
+    """
+    top = _pick_item(clothes, "상의") or "등록된 상의 없음"
+    bottom = _pick_item(clothes, "하의") or "등록된 하의 없음"
+    outer = _pick_item(clothes, "아우터")
+    acc = _pick_item(clothes, "기타") or _pick_item(clothes, "신발")
+
+    return {
+        "top": top,
+        "bottom": bottom,
+        "outer": outer,
+        "acc": acc,
+        "reason": reason,
+        "style_tip": "날씨와 활동 환경을 고려해 두께감이 맞는 옷을 우선 선택했습니다.",
+    }
+
+
+def _pick_item(clothes: List[ClothingItem], category: str):
+    for item in clothes:
+        if item.category == category:
+            parts = [item.color, item.material, item.category]
+            return " ".join(part for part in parts if part) or item.category
+    return None

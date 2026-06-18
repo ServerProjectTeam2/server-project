@@ -1,0 +1,65 @@
+[
+    {
+        "id": "default_black_hoodie",
+        "category": "상의",
+        "color": "검정",
+        "thickness": "두꺼움",
+        "material": "면",
+        "tags": ["캐주얼", "스트릿"],
+        "description": "검정 후드티"
+    },
+    {
+        "id": "default_white_tshirt",
+        "category": "상의",
+        "color": "흰색",
+        "thickness": "얇음",
+        "material": "면",
+        "tags": ["캐주얼", "여름"],
+        "description": "흰 반팔 티셔츠"
+    },
+    {
+        "id": "default_jeans",
+        "category": "하의",
+        "color": "파랑",
+        "thickness": "보통",
+        "material": "데님",
+        "tags": ["캐주얼"],
+        "description": "청바지"
+    },
+    {
+        "id": "default_beige_shorts",
+        "category": "하의",
+        "color": "베이지",
+        "thickness": "얇음",
+        "material": "면",
+        "tags": ["여름"],
+        "description": "베이지 반바지"
+    },
+    {
+        "id": "default_light_shirt",
+        "category": "아우터",
+        "color": "하늘색",
+        "thickness": "얇음",
+        "material": "린넨",
+        "tags": ["깔끔함", "여름"],
+        "description": "얇은 셔츠"
+    },
+    {
+        "id": "default_black_slacks",
+        "category": "하의",
+        "color": "검정",
+        "thickness": "보통",
+        "material": "폴리",
+        "tags": ["깔끔함"],
+        "description": "검정 슬랙스"
+    },
+    {
+        "id": "default_windbreaker",
+        "category": "아우터",
+        "color": "회색",
+        "thickness": "얇음",
+        "material": "나일론",
+        "tags": ["실외"],
+        "description": "가벼운 바람막이"
+    }
+]

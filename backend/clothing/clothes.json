@@ -1,0 +1,150 @@
+[
+    {
+        "id": "fac932fe-c975-41ed-86cb-2cfa18d30039",
+        "category": "상의",
+        "color": "검정",
+        "thickness": "보통",
+        "material": null,
+        "tags": [],
+        "description": null,
+        "image_path": null
+    },
+    {
+        "id": "03fe427f-4776-4304-ad57-8eb257935568",
+        "category": "하의",
+        "color": "파란색",
+        "thickness": "보통",
+        "material": "면",
+        "tags": [
+            "캐주얼"
+        ],
+        "description": null,
+        "image_path": null
+    },
+    {
+        "id": "e63b72f2-2cd1-41f8-82a2-97df3c1fe64a",
+        "category": "아우터",
+        "color": "하늘색",
+        "thickness": "얇음",
+        "material": "면",
+        "tags": [
+            "캐주얼"
+        ],
+        "description": "난방",
+        "image_path": null
+    },
+    {
+        "id": "095105fc-b06d-4499-ae6f-2394b748ae62",
+        "category": "신발",
+        "color": "검정, 흰색",
+        "thickness": "보통",
+        "material": "면",
+        "tags": [
+            "캐주얼"
+        ],
+        "description": null,
+        "image_path": null
+    },
+    {
+        "id": "17effabb-22af-4e20-bea6-51030dd4ed22",
+        "category": "상의",
+        "color": "검정",
+        "thickness": "보통",
+        "material": null,
+        "tags": [],
+        "description": null,
+        "image_path": null
+    },
+    {
+        "id": "sample_black_hoodie",
+        "category": "상의",
+        "color": "검정",
+        "thickness": "두꺼움",
+        "material": "면",
+        "tags": [
+            "캐주얼",
+            "스트릿"
+        ],
+        "description": "검정 후드티"
+    },
+    {
+        "id": "sample_white_tshirt",
+        "category": "상의",
+        "color": "흰색",
+        "thickness": "얇음",
+        "material": "면",
+        "tags": [
+            "캐주얼",
+            "여름"
+        ],
+        "description": "흰 반팔 티셔츠"
+    },
+    {
+        "id": "sample_jeans",
+        "category": "하의",
+        "color": "파랑",
+        "thickness": "보통",
+        "material": "데님",
+        "tags": [
+            "캐주얼"
+        ],
+        "description": "청바지"
+    },
+    {
+        "id": "sample_beige_shorts",
+        "category": "하의",
+        "color": "베이지",
+        "thickness": "얇음",
+        "material": "면",
+        "tags": [
+            "여름"
+        ],
+        "description": "베이지 반바지"
+    },
+    {
+        "id": "sample_light_shirt",
+        "category": "아우터",
+        "color": "하늘색",
+        "thickness": "얇음",
+        "material": "린넨",
+        "tags": [
+            "깔끔함",
+            "여름"
+        ],
+        "description": "얇은 셔츠"
+    },
+    {
+        "id": "sample_black_slacks",
+        "category": "하의",
+        "color": "검정",
+        "thickness": "보통",
+        "material": "폴리",
+        "tags": [
+            "깔끔함"
+        ],
+        "description": "검정 슬랙스"
+    },
+    {
+        "id": "sample_windbreaker",
+        "category": "아우터",
+        "color": "회색",
+        "thickness": "얇음",
+        "material": "나일론",
+        "tags": [
+            "실외"
+        ],
+        "description": "가벼운 바람막이"
+    },
+    {
+        "id": "332ab491-b3c6-4228-b01d-5457d8d40199",
+        "category": "상의",
+        "color": "검정",
+        "thickness": "얇음",
+        "material": "면",
+        "tags": [
+            "캐주얼"
+        ],
+        "description": "여름 반팔",
+        "image_path": null
+    }
+]

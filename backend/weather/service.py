@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import math
 import os
+import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import ProxyHandler, Request, build_opener, urlopen
 
 try:
     from dotenv import load_dotenv
@@ -23,6 +24,7 @@ KMA_APIHUB_BASE_URL = "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfo
 KAKAO_ADDRESS_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/address.json"
 KAKAO_KEYWORD_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 KST_OFFSET = timedelta(hours=9)
+DIRECT_OPENER = build_opener(ProxyHandler({}))
 
 PRECIPITATION_TYPES = {
     "0": "No precipitation",
@@ -126,13 +128,27 @@ def get_current_weather(
     ncst_base_date, ncst_base_time = _latest_ultra_ncst_base(now)
     fcst_base_date, fcst_base_time = _latest_ultra_fcst_base(now)
 
-    current = _items_to_map(
-        _request_vilage_fcst("getUltraSrtNcst", ncst_base_date, ncst_base_time, location.nx, location.ny),
-        value_key="obsrValue",
-    )
-    forecast = _nearest_forecast_map(
-        _request_vilage_fcst("getUltraSrtFcst", fcst_base_date, fcst_base_time, location.nx, location.ny)
-    )
+    current_items = []
+    forecast_items = []
+    current_error = None
+    forecast_error = None
+
+    try:
+        current_items = _request_vilage_fcst("getUltraSrtNcst", ncst_base_date, ncst_base_time, location.nx, location.ny)
+    except WeatherServiceError as exc:
+        current_error = exc
+
+    # 실황만으로도 핵심 날씨값은 만들 수 있습니다. 예보는 하늘 상태 보강용입니다.
+    try:
+        forecast_items = _request_vilage_fcst("getUltraSrtFcst", fcst_base_date, fcst_base_time, location.nx, location.ny)
+    except WeatherServiceError as exc:
+        forecast_error = exc
+
+    if not current_items and not forecast_items:
+        raise WeatherServiceError(f"KMA APIHub request failed. ncst={current_error}; fcst={forecast_error}")
+
+    current = _items_to_map(current_items, value_key="obsrValue")
+    forecast = _nearest_forecast_map(forecast_items)
 
     temperature = _to_float(current.get("T1H") or forecast.get("T1H"))
     humidity = _to_int(current.get("REH") or forecast.get("REH"))
@@ -184,14 +200,35 @@ def _request_vilage_fcst(endpoint: str, base_date: str, base_time: str, nx: int,
     }
     url = f"{KMA_APIHUB_BASE_URL}/{endpoint}?{urlencode(params)}"
 
-    try:
-        with urlopen(url, timeout=10) as response:
-            raw = response.read().decode("utf-8", errors="replace")
-    except HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise WeatherServiceError(f"KMA APIHub request failed: {detail}") from exc
-    except (URLError, TimeoutError) as exc:
-        raise WeatherServiceError(f"KMA APIHub request failed: {exc}") from exc
+    raw = None
+    last_error = None
+    for attempt in range(5):
+        try:
+            with DIRECT_OPENER.open(url, timeout=10) as response:
+                raw = response.read().decode("utf-8", errors="replace")
+            break
+        except HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            last_error = detail
+            if exc.code >= 500 and attempt < 4:
+                time.sleep(1.0)
+                continue
+            raise WeatherServiceError(
+                f"KMA APIHub request failed ({endpoint}, base_date={base_date}, base_time={base_time}, nx={nx}, ny={ny}): {detail}"
+            ) from exc
+        except (URLError, TimeoutError) as exc:
+            last_error = exc
+            if attempt < 4:
+                time.sleep(1.0)
+                continue
+            raise WeatherServiceError(
+                f"KMA APIHub request failed ({endpoint}, base_date={base_date}, base_time={base_time}, nx={nx}, ny={ny}): {exc}"
+            ) from exc
+
+    if raw is None:
+        raise WeatherServiceError(
+            f"KMA APIHub request failed ({endpoint}, base_date={base_date}, base_time={base_time}, nx={nx}, ny={ny}): {last_error}"
+        )
 
     if "Unauthorized" in raw:
         raise WeatherServiceError("KMA APIHub authorization failed. Check authKey and API subscription.")
@@ -199,12 +236,16 @@ def _request_vilage_fcst(endpoint: str, base_date: str, base_time: str, nx: int,
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise WeatherServiceError(f"KMA APIHub did not return JSON: {raw[:300]}") from exc
+        raise WeatherServiceError(
+            f"KMA APIHub did not return JSON ({endpoint}, base_date={base_date}, base_time={base_time}, nx={nx}, ny={ny}): {raw[:300]}"
+        ) from exc
 
     header = data.get("response", {}).get("header", {})
     if header.get("resultCode") != "00":
         message = header.get("resultMsg", "Unknown KMA APIHub error")
-        raise WeatherServiceError(f"KMA APIHub error: {message}")
+        raise WeatherServiceError(
+            f"KMA APIHub error ({endpoint}, base_date={base_date}, base_time={base_time}, nx={nx}, ny={ny}): {message}"
+        )
 
     item = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
     if isinstance(item, dict):
@@ -298,7 +339,7 @@ def _search_kakao(url: str, query: str, kakao_key: str) -> Optional[Dict[str, An
     request = Request(request_url, headers={"Authorization": f"KakaoAK {kakao_key}"})
 
     try:
-        with urlopen(request, timeout=10) as response:
+        with DIRECT_OPENER.open(request, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
@@ -353,7 +394,7 @@ def _search_kakao_documents(url: str, query: str, count: int, kakao_key: str) ->
     request = Request(request_url, headers={"Authorization": f"KakaoAK {kakao_key}"})
 
     try:
-        with urlopen(request, timeout=10) as response:
+        with DIRECT_OPENER.open(request, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")

@@ -3,7 +3,7 @@
 from typing import List
 from fastapi import APIRouter, UploadFile, File
 from backend.clothing.schema import ClothingItem, WardrobeInput
-from backend.clothing.service import save_clothes, save_image, load_clothes, delete_clothing
+from backend.clothing.service import save_clothes, save_image, load_clothes, delete_clothing, load_sample_clothes
 from backend.clothing.vision import analyze_clothing_image
 
 router = APIRouter(prefix="/clothing", tags=["clothing"])
@@ -13,14 +13,14 @@ async def get_all_clothing():
     """저장된 모든 옷 목록을 조회합니다."""
     return load_clothes()
 
-@router.delete("/{item_id}")
-async def delete_clothing_item(item_id: str):
-    """특정 ID의 옷 정보를 삭제합니다."""
-    updated_wardrobe = delete_clothing(item_id)
+@router.post("/load-samples")
+async def load_sample_clothing_items():
+    updated_wardrobe = load_sample_clothes()
     return {
         "status": "success",
-        "message": f"Item with ID {item_id} deleted.",
-        "total_count": len(updated_wardrobe)
+        "message": "내 옷장을 불러왔습니다.",
+        "total_count": len(updated_wardrobe),
+        "items": updated_wardrobe,
     }
 
 @router.post("/upload-and-analyze")
@@ -65,5 +65,15 @@ async def manual_clothing_input(wardrobe: WardrobeInput):
     return {
         "status": "success",
         "items": wardrobe.items,
+        "total_count": len(updated_wardrobe)
+    }
+
+@router.delete("/{item_id}")
+async def delete_clothing_item(item_id: str):
+    """특정 ID의 옷 정보를 삭제합니다."""
+    updated_wardrobe = delete_clothing(item_id)
+    return {
+        "status": "success",
+        "message": f"Item with ID {item_id} deleted.",
         "total_count": len(updated_wardrobe)
     }

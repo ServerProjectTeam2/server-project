@@ -22,12 +22,7 @@ class LLMService:
         
         self.model_name = os.getenv("GROQ_MODEL_NAME", "openai/gpt-oss-20b")
         
-        # ChatGroq 클라이언트 초기화
-        self.llm = ChatGroq(
-            temperature=0.7,
-            model_name=self.model_name,
-            groq_api_key=self.api_key
-        )
+        self.llm = None
 
     async def generate_recommendation(
         self, 
@@ -62,7 +57,7 @@ class LLMService:
                 ("human", user_prompt),
             ]
             
-            response = self.llm.invoke(messages)
+            response = self._get_llm().invoke(messages)
             
             # JSON 파싱 시도 (LLM이 JSON 형식을 잘 지켰을 경우)
             try:
@@ -76,16 +71,48 @@ class LLMService:
                 return json.loads(content)
             except json.JSONDecodeError:
                 # 파싱 실패 시 원문 반환 또는 기본 구조 반환
-                return {
-                    "raw_response": response.content,
-                    "error": "JSON parsing failed"
-                }
+                return self._fallback_recommendation(
+                    clothes,
+                    "LLM 응답 JSON 파싱에 실패해 기본 추천을 반환했습니다.",
+                )
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "fallback": "LLM 호출 중 오류가 발생했습니다."
-            }
+            return self._fallback_recommendation(
+                clothes,
+                f"LLM 호출 중 오류가 발생해 기본 추천을 반환했습니다: {str(e)}",
+            )
+
+    def _get_llm(self):
+        if self.llm is not None:
+            return self.llm
+
+        self.api_key = os.getenv("GROQ_API_KEY")
+        if not self.api_key:
+            raise RuntimeError("GROQ_API_KEY is not set.")
+
+        self.llm = ChatGroq(
+            temperature=0.7,
+            model_name=self.model_name,
+            groq_api_key=self.api_key,
+        )
+        return self.llm
+
+    def _fallback_recommendation(self, clothes: List[ClothingItem], reason: str) -> Dict[str, Any]:
+        return {
+            "top": self._pick_item(clothes, "상의") or "등록된 상의 없음",
+            "bottom": self._pick_item(clothes, "하의") or "등록된 하의 없음",
+            "outer": self._pick_item(clothes, "아우터"),
+            "acc": self._pick_item(clothes, "기타") or self._pick_item(clothes, "신발"),
+            "reason": reason,
+            "style_tip": "기본 색상과 날씨에 맞는 두께감을 우선해 안정적인 조합을 추천합니다.",
+        }
+
+    def _pick_item(self, clothes: List[ClothingItem], category: str):
+        for item in clothes:
+            if item.category == category:
+                parts = [item.color, item.material, item.category]
+                return " ".join(part for part in parts if part) or item.category
+        return None
 
 # 싱글톤 인스턴스
 llm_service = LLMService()

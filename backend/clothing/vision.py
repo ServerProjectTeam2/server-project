@@ -1,8 +1,12 @@
 import os
 import json
 import base64
+from contextlib import contextmanager
 from typing import Dict, Any
 from langchain_groq import ChatGroq
+
+
+DEFAULT_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 def analyze_clothing_image(image_bytes: bytes) -> Dict[str, Any]:
     """
@@ -12,13 +16,6 @@ def analyze_clothing_image(image_bytes: bytes) -> Dict[str, Any]:
     if not api_key:
         return {"error": "GROQ_API_KEY가 설정되지 않았습니다."}
 
-    # Vision 모델 초기화
-    llm = ChatGroq(
-        temperature=0.0,
-        model_name="llama-3.2-11b-vision-preview",
-        groq_api_key=api_key
-    )
-    
     base64_image = base64.b64encode(image_bytes).decode("utf-8")
     
     system_prompt = """
@@ -35,6 +32,10 @@ def analyze_clothing_image(image_bytes: bytes) -> Dict[str, Any]:
     
     messages = [
         {
+            "role": "system",
+            "content": system_prompt
+        },
+        {
             "role": "user",
             "content": [
                 {"type": "text", "text": "이 옷의 속성을 분석해줘."},
@@ -44,14 +45,16 @@ def analyze_clothing_image(image_bytes: bytes) -> Dict[str, Any]:
                 },
             ],
         },
-        {
-            "role": "system",
-            "content": system_prompt
-        }
     ]
 
     try:
-        response = llm.invoke(messages)
+        with _without_proxy_env():
+            llm = ChatGroq(
+                temperature=0.0,
+                model_name=os.getenv("GROQ_VISION_MODEL", DEFAULT_VISION_MODEL),
+                groq_api_key=api_key
+            )
+            response = llm.invoke(messages)
         content = response.content.strip()
         
         # 마크다운 블록 제거
@@ -60,7 +63,7 @@ def analyze_clothing_image(image_bytes: bytes) -> Dict[str, Any]:
         elif content.startswith("```"):
             content = content[3:-3].strip()
             
-        return json.loads(content)
+        return _normalize_analysis(json.loads(content))
     except Exception as e:
         print(f"Vision analysis error: {e}")
         return {
@@ -71,3 +74,34 @@ def analyze_clothing_image(image_bytes: bytes) -> Dict[str, Any]:
             "tags": [],
             "description": f"이미지 분석 실패: {str(e)}"
         }
+
+
+def _normalize_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
+    tags = data.get("tags") or []
+    if isinstance(tags, str):
+        tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
+
+    return {
+        "category": data.get("category") or "기타",
+        "color": data.get("color") or "알수없음",
+        "thickness": data.get("thickness") or "보통",
+        "material": data.get("material") or "알수없음",
+        "tags": tags if isinstance(tags, list) else [],
+        "description": data.get("description") or "이미지 분석 결과 설명이 없습니다.",
+    }
+
+
+@contextmanager
+def _without_proxy_env():
+    proxy_keys = ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]
+    saved = {key: os.environ.get(key) for key in proxy_keys}
+    try:
+        for key in proxy_keys:
+            os.environ.pop(key, None)
+        yield
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
