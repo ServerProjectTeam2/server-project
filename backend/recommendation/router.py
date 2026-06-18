@@ -40,10 +40,19 @@ async def get_clothing_recommendation(request: RecommendationRequest):
         # dict 리스트를 ClothingItem 객체 리스트로 변환
         clothes_items = [ClothingItem(**item) for item in clothes_data]
 
-        # 3. LLM 서비스 호출하여 추천 사유 및 코디 생성
+        # 3. 점수 시스템을 사용하여 상위 후보군만 필터링 (LLM 부하 감소 및 정확도 향상)
+        filtered_items = get_top_scored_items(
+            clothes=clothes_items,
+            weather=weather_data,
+            preferred_style=request.preferred_style,
+            activity_env=request.activity_env,
+            top_n=3  # 카테고리별 상위 3개만 LLM에게 전달
+        )
+
+        # 4. LLM 서비스 호출하여 추천 사유 및 코디 생성
         recommendation = await llm_service.generate_recommendation(
             weather=weather_data,
-            clothes=clothes_items,
+            clothes=filtered_items,
             activity_env=request.activity_env,
             preferred_style=request.preferred_style
         )
