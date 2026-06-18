@@ -210,6 +210,6 @@ with gr.Blocks(title="AI 코디 상담 챗봇") as demo:
             outputs=[add_status, clothes_view],
         )
 
-
 if __name__ == "__main__":
     demo.launch()
+
